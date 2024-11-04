@@ -25,6 +25,9 @@
 #define CAN_MAZDA_RX_STEERING_WARNING 0x300
 // #define CAN_MAZDA_RX_STATUS_1         0x212
 #define CAN_MAZDA_RX_STATUS_2         0x420
+#define CAN_MAZDA_NC_RPM_SPEED        0x201
+#define CAN_MAZDA_NC_STATUS_2         0x420
+
 
 //w202 DASH
 #define W202_STAT_1	     0x308 /* _20ms cycle */
@@ -151,6 +154,9 @@ void updateDash(CanCycle cycle) {
 	case CAN_BUS_MAZDA_RX8:
 		canMazdaRX8(cycle);
 		break;
+	case CAN_BUS_MAZDA_NC:
+		canMazdaNC(cycle);
+		break;	
 	case CAN_BUS_W202_C180:
 		canDashboardW202(cycle);
 		break;
@@ -253,6 +259,46 @@ void canMazdaRX8(CanCycle cycle) {
 	}
 
 }
+
+void canMazdaNC(CanCycle cycle) {
+	if (cycle.isInterval(CI::_50ms)) {
+		{
+			CanTxMessage msg(CAN_MAZDA_NC_RPM_SPEED, 8);
+
+			float kph = Sensor::getOrZero(SensorType::VehicleSpeed);
+
+			msg.setShortValue(SWAP_UINT16(Sensor::getOrZero(SensorType::Rpm) * 4), 0);
+			msg.setShortValue(0xFFFF, 2);
+			msg.setShortValue(SWAP_UINT16((int )(100 * kph + 10000)), 4);
+			msg.setShortValue(0, 6);
+		}
+
+		{
+			CanTxMessage msg(CAN_MAZDA_NC_STATUS_2, 8);
+			auto clt = Sensor::get(SensorType::Clt);
+			msg[0] = (uint8_t)(clt.value_or(0) + 69); //temp gauge //~170 is red, ~165 last bar, 152 centre, 90 first bar, 92 second bar
+			// TODO: fixme!
+			//msg[1] = ((int16_t)(engine->engineState.vssEventCounter*(engineConfiguration->vehicleSpeedCoef*0.277*2.58))) & 0xff;
+			msg[2] = 0x00; // unknown
+			msg[3] = 0x00; //unknown
+			msg[4] = 0x01; //Oil Pressure (not really a gauge)
+			msg[5] = 0x00; //check engine light
+			msg[6] = 0x00; //Coolant, oil and battery
+			if ((Sensor::getOrZero(SensorType::Rpm)>0) && (Sensor::get(SensorType::BatteryVoltage).value_or(VBAT_FALLBACK_VALUE)<13)) {
+				msg.setBit(6, 6); // battery light
+			}
+			if (!clt.Valid || clt.Value > 105) {
+				// coolant light, 101 - red zone, light means its get too hot
+				// Also turn on the light in case of sensor failure
+				msg.setBit(6, 1);
+			}
+			//oil pressure warning lamp bit is 7
+			msg[7] = 0x00; //unused
+		}
+	}
+
+}
+
 
 void canDashboardFiat(CanCycle cycle) {
 	if (cycle.isInterval(CI::_50ms)) {
