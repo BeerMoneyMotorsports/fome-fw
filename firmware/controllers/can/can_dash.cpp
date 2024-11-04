@@ -23,7 +23,7 @@
 #define CAN_FIAT_MOTOR_INFO           0x561
 #define CAN_MAZDA_RX_RPM_SPEED        0x201
 #define CAN_MAZDA_RX_STEERING_WARNING 0x300
-#define CAN_MAZDA_RX_STATUS_1         0x212
+// #define CAN_MAZDA_RX_STATUS_1         0x212
 #define CAN_MAZDA_RX_STATUS_2         0x420
 
 //w202 DASH
@@ -217,15 +217,15 @@ void canMazdaRX8(CanCycle cycle) {
 		}
 
 		{
-			CanTxMessage msg(CAN_MAZDA_RX_STATUS_1, 8);
-			msg[0] = 0xFE; //Unknown
-			msg[1] = 0xFE; //Unknown
-			msg[2] = 0xFE; //Unknown
-			msg[3] = 0x34; //DSC OFF in combo with byte 5 Live data only seen 0x34
-			msg[4] = 0x00; // B01000000; // Brake warning B00001000;  //ABS warning
-			msg[5] = 0x40; // TCS in combo with byte 3
-			msg[6] = 0x00; // Unknown
-			msg[7] = 0x00; // Unused
+			// CanTxMessage msg(CAN_MAZDA_RX_STATUS_1, 8);
+			// msg[0] = 0xFE; //Unknown
+			// msg[1] = 0xFE; //Unknown
+			// msg[2] = 0xFE; //Unknown
+			// msg[3] = 0x34; //DSC OFF in combo with byte 5 Live data only seen 0x34
+			// msg[4] = 0x00; // B01000000; // Brake warning B00001000;  //ABS warning
+			// msg[5] = 0x40; // TCS in combo with byte 3
+			// msg[6] = 0x00; // Unknown
+			// msg[7] = 0x00; // Unused
 		}
 
 		{
